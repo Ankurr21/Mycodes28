@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A little something for you ❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Quicksand:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            background: linear-gradient(135deg, #ffd1ff 0%, #fae1ff 100%);
+        }
+
+        .card-stack {
+            position: relative;
+            width: 320px;
+            height: 420px;
+        }
+
+        .love-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2.5rem;
+            text-align: center;
+            cursor: grab;
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s;
+            user-select: none;
+            border: 1px solid #fff0f0;
+        }
+
+        .quote-text {
+            color: #4a5568;
+            font-size: 1.15rem;
+            line-height: 1.7;
+            font-weight: 500;
+        }
+
+        /* Envelope Styles */
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .envelope {
+            position: relative;
+            width: 220px;
+            height: 150px;
+            background: #ff8fa3;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .envelope:before {
+            content: "";
+            position: absolute;
+            top: 0;
+            z-index: 2;
+            border-left: 110px solid transparent;
+            border-right: 110px solid transparent;
+            border-top: 90px solid #ffb3c1;
+            transform-origin: top;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .envelope.open:before {
+            transform: rotateX(180deg);
+            z-index: 0;
+        }
+
+        .shake {
+            animation: shake 0.8s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            50% { transform: rotate(0eg); }
+            75% { transform: rotate(-2deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .heart-float {
+            position: fixed;
+            pointer-events: none;
+            z-index: -1;
+            animation: float 7s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(110vh) scale(0.5); opacity: 0; }
+            50% { opacity: 0.7; }
+            100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 overflow-hidden">
+
+    <div id="screen-start" class="text-center z-10 scale-in">
+        <h1 class="text-3xl font-bold text-pink-600 mb-8">A little something for you ❤️</h1>
+        <button onclick="startExperience()" class="bg-pink-500 hover:bg-pink-600 text-white px-12 py-4 rounded-full text-lg font-bold shadow-xl transition-all active:scale-90">
+            Open Now
+        </button>
+    </div>
+
+    <div id="screen-swipe" class="hidden flex-col items-center z-10 w-full">
+        <p class="text-pink-400 font-medium mb-8 animate-bounce">Slide each note ❤️</p>
+        <div class="card-stack" id="cardStack"></div>
+    </div>
+
+    <div id="screen-envelope" class="hidden flex-col items-center z-10 text-center">
+        <p class="text-pink-600 font-semibold mb-10 text-lg">You’ve found all my notes... 💌</p>
+        <div class="envelope-wrapper shake" id="envelopeWrapper" onclick="openEnvelope()">
+            <div class="envelope" id="mainEnvelope"></div>
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 text-white text-4xl">❤️</div>
+        </div>
+        <p class="mt-10 text-pink-400 italic">Tap the heart to open</p>
+    </div>
+
+    <div id="screen-letter" class="hidden flex-col items-center z-20 max-w-sm w-full bg-white/95 p-8 rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]">
+        <div class="text-left w-full">
+            <h2 class="text-2xl font-bold text-pink-600 mb-5">My Sweet Sixteen,</h2>
+            <p id="letterContent" class="text-gray-700 leading-relaxed text-lg mb-8"></p>
+            <p class="text-pink-600 font-bold italic text-right">With all my love,<br>Ankur.</p>
+        </div>
+        
+        <button id="surpriseBtn" onclick="launchSurprise()" class="mt-6 bg-purple-500 text-white px-8 py-3 rounded-full font-bold shadow-lg transition-all active:scale-95">
+            Tap for surprise 🎈
+        </button>
+        
+        <button onclick="location.reload()" class="mt-6 text-gray-400 text-xs tracking-widest uppercase">Replay</button>
+    </div>
+
+    <div id="bg-hearts"></div>
+
+    <script>
+        const quotes = [
+            "Every time I look at you, I see all the reasons my heart chose you and keeps choosing you, every single day.",
+            "You are the most beautiful part of my day, and the best part of my life.",
+            "You don’t just say you love me—you show it in the smallest things, and that’s what makes it so real.",
+            "In your eyes, I see a love so pure, it reminds me how lucky I am to be yours.",
+            "You love me in ways I didn’t even know I needed, and that’s what makes you everything to me.",
+            "If love had a face, it would look like you—kind, warm, and always there when I need it most."
+        ];
+
+        let currentCardIndex = quotes.length - 1;
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤️';
+            heart.className = 'heart-float';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.fontSize = (Math.random() * 15 + 15) + 'px';
+            document.getElementById('bg-hearts').appendChild(heart);
+            setTimeout(() => heart.remove(), 7000);
+        }
+        setInterval(createHeart, 600);
+
+        function startExperience() {
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-swipe').classList.remove('hidden');
+            renderCards();
+        }
+
+        function renderCards() {
+            const stack = document.getElementById('cardStack');
+            quotes.forEach((text, index) => {
+                const card = document.createElement('div');
+                card.className = 'love-card';
+                card.style.zIndex = index;
+                card.innerHTML = `<div class="quote-text">"${text}"</div>`;
+                
+                let startX = 0;
+                const handleStart = (e) => startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                
+                const handleMove = (e) => {
+                    if (!startX) return;
+                    let currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                    let moveX = currentX - startX;
+                    if (moveX > 0) card.style.transform = `translateX(${moveX}px) rotate(${moveX/15}deg)`;
+                };
+
+                const handleEnd = (e) => {
+                    let endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+                    if (endX - startX > 100) {
+                        card.style.transform = 'translateX(1000px) rotate(45deg)';
+                        card.style.opacity = '0';
+                        currentCardIndex--;
+                        if (currentCardIndex < 0) transitionToEnvelope();
+                    } else {
+                        card.style.transform = '';
+                    }
+                    startX = 0;
+                };
+
+                card.addEventListener('touchstart', handleStart);
+                card.addEventListener('touchmove', handleMove);
+                card.addEventListener('touchend', handleEnd);
+                card.addEventListener('mousedown', handleStart);
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('mouseup', handleEnd);
+
+                stack.appendChild(card);
+            });
+        }
+
+        function transitionToEnvelope() {
+            setTimeout(() => {
+                document.getElementById('screen-swipe').classList.add('hidden');
+                document.getElementById('screen-envelope').classList.remove('hidden');
+            }, 500);
+        }
+
+        function openEnvelope() {
+            document.getElementById('envelopeWrapper').classList.remove('shake');
+            document.getElementById('mainEnvelope').classList.add('open');
+            setTimeout(() => {
+                document.getElementById('screen-envelope').classList.add('hidden');
+                showLetter();
+            }, 1000);
+        }
+
+        function showLetter() {
+            document.getElementById('screen-letter').classList.remove('hidden');
+            document.getElementById('screen-letter').classList.add('flex');
+            
+            const message = "Happy Birthday to the most beautiful soul I know. Loving you has been the most incredible journey of my life. You are my heart, my peace, and my greatest happiness.\n\nOn your birthday, I just want to promise you that I’ll always be there for you—through every smile, every tear, and every dream. You deserve all the love in the world, and I’ll spend my life making sure you feel it.";
+            
+            let i = 0;
+            const container = document.getElementById('letterContent');
+            function type() {
+                if (i < message.length) {
+                    container.innerHTML += message.charAt(i);
+                    i++;
+                    setTimeout(type, 35);
+                }
+            }
+            type();
+        }
+
+        function launchSurprise() {
+            confetti({
+                particleCount: 200,
+                spread: 80,
+                origin: { y: 0.6 },
+                colors: ['#ff8fa3', '#ff4d6d', '#ffffff']
+            });
+            const btn = document.getElementById('surpriseBtn');
+            btn.innerText = "Happy 18th Birthday ❤️";
+            btn.classList.replace('bg-purple-500', 'bg-pink
